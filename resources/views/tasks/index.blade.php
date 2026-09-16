@@ -17,6 +17,22 @@
 @section('content')
 <div class="container-fluid px-0">
 
+    @if(empty($lists) || count($lists) === 0)
+        <div class="card border-0 shadow-sm rounded-4 text-center p-5 my-4 bg-white">
+            <div class="bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-3" style="width: 64px; height: 64px;">
+                <i class="bi bi-folder-x fs-2"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-1">Belum Ada List Tugas</h4>
+            <p class="text-muted mx-auto" style="max-width: 450px;">
+                Seluruh list telah dihapus atau belum dibuat. Silakan buat list baru untuk mulai mengelola task dan berkolaborasi bersama tim.
+            </p>
+            <div>
+                <button class="btn btn-primary px-4 py-2 rounded-3 fw-medium" data-bs-toggle="modal" data-bs-target="#createListModal">
+                    <i class="bi bi-plus-circle me-1"></i> Buat List Baru
+                </button>
+            </div>
+        </div>
+    @else
     <!-- Quick Filter / Scope Tabs -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4 pb-2 border-bottom">
         <ul class="nav nav-pills gap-1">
@@ -112,6 +128,7 @@
             </div>
         @endforelse
     </div>
+    @endif
 
 </div>
 

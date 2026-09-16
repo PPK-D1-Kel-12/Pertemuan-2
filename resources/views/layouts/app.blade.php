@@ -329,14 +329,12 @@
                                     Member
                                 </span>
                             @endif
-                            @if(count($lists ?? []) > 1)
-                                <form action="{{ route('lists.destroy', $list['id']) }}" method="POST" onsubmit="return confirm('Hapus list {{ $list['name'] }}?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-link btn-sm text-muted p-1 text-decoration-none opacity-50 hover-opacity-100" title="Hapus List">
-                                        <i class="bi bi-trash" style="font-size: 0.75rem;"></i>
-                                    </button>
-                                </form>
+                            @if(!empty($list['is_owner']))
+                                <button type="button" class="btn btn-link btn-sm text-danger p-1 text-decoration-none opacity-50 hover-opacity-100" 
+                                        onclick="openDeleteListModal({{ $list['id'] }}, '{{ addslashes($list['name']) }}')" 
+                                        title="Hapus List Beserta Seluruh Isinya (SRS-F-18)">
+                                    <i class="bi bi-trash text-danger" style="font-size: 0.75rem;"></i>
+                                </button>
                             @endif
                         </div>
                     </div>
@@ -487,6 +485,9 @@
 
     <!-- Modal Buat List Baru (SRS-F-17 - Auto-Ownership) -->
     @include('tasks.partials.modal-create-list')
+
+    <!-- Modal Safeguard Hapus List Kaskade & Rollback (SRS-F-18) -->
+    @include('tasks.partials.modal-delete-list')
 
     <!-- Bootstrap 5.3 Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
