@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\MockDataService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
@@ -23,7 +24,8 @@ class TaskController extends Controller
 
         $currentUser = $this->mockService->getCurrentUser();
         $users = $this->mockService->getUsers();
-        $lists = $this->mockService->getLists();
+        $lists = ListController::getLists();
+
         $tasks = $this->mockService->getTasks($listId, $filter);
         $notifications = $this->mockService->getNotifications();
 
