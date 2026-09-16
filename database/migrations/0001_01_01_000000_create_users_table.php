@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('avatar', 10)->default('US');
+            $table->string('color', 20)->default('#4f46e5');
+            $table->enum('role', ['user', 'admin'])->default('user');
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->rememberToken();
             $table->timestamps();
         });
