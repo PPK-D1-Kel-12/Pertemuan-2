@@ -314,20 +314,31 @@
             </div>
             <nav class="nav flex-column mb-3">
                 @foreach($lists ?? [] as $list)
-                    <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
                         <a class="nav-link-custom flex-grow-1 {{ ($currentListId ?? 1) == $list['id'] && !request()->routeIs('admin.*') ? 'active' : '' }}" href="{{ route('tasks.index', ['list_id' => $list['id'], 'filter' => $currentFilter ?? 'all']) }}">
                             <i class="bi bi-folder2{{ ($currentListId ?? 1) == $list['id'] && !request()->routeIs('admin.*') ? '-open text-primary' : '' }}"></i> 
-                            <span class="text-truncate">{{ $list['name'] }}</span>
+                            <span class="text-truncate me-1">{{ $list['name'] }}</span>
                         </a>
-                        @if(count($lists ?? []) > 1)
-                            <form action="{{ route('lists.destroy', $list['id']) }}" method="POST" onsubmit="return confirm('Hapus list {{ $list['name'] }}?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-link btn-sm text-muted p-1 text-decoration-none opacity-50 hover-opacity-100" title="Hapus List">
-                                    <i class="bi bi-trash" style="font-size: 0.75rem;"></i>
-                                </button>
-                            </form>
-                        @endif
+                        <div class="d-flex align-items-center gap-1 ms-1">
+                            @if(!empty($list['is_owner']))
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-1 py-0 rounded" style="font-size: 0.62rem;" title="Anda adalah Pemilik List ini (SRS-F-17)">
+                                    <i class="bi bi-star-fill text-warning me-1"></i>Owner
+                                </span>
+                            @else
+                                <span class="badge bg-light text-muted border px-1 py-0 rounded" style="font-size: 0.62rem;" title="List dibagikan kepada Anda">
+                                    Member
+                                </span>
+                            @endif
+                            @if(count($lists ?? []) > 1)
+                                <form action="{{ route('lists.destroy', $list['id']) }}" method="POST" onsubmit="return confirm('Hapus list {{ $list['name'] }}?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-link btn-sm text-muted p-1 text-decoration-none opacity-50 hover-opacity-100" title="Hapus List">
+                                        <i class="bi bi-trash" style="font-size: 0.75rem;"></i>
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
                     </div>
                 @endforeach
             </nav>
@@ -474,31 +485,8 @@
         @yield('content')
     </div>
 
-    <!-- Modal Buat List Baru (SRS-F-03 - Novelya) -->
-    <div class="modal fade" id="createListModal" tabindex="-1" aria-labelledby="createListModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header border-bottom py-2">
-                    <h6 class="modal-title fw-bold" id="createListModalLabel">
-                        <i class="bi bi-folder-plus text-primary me-1"></i> Buat List Baru
-                    </h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form action="{{ route('lists.store') }}" method="POST">
-                    @csrf
-                    <div class="modal-body p-3">
-                        <label class="form-label small fw-semibold">Nama List / Kategori</label>
-                        <input type="text" name="name" class="form-control form-control-sm" placeholder="Contoh: Sprint 2, Skripsi, Belanja" required autofocus>
-                        <small class="text-muted" style="font-size: 0.7rem;">Task dapat dikelompokkan ke dalam list ini (SRS-F-03).</small>
-                    </div>
-                    <div class="modal-footer border-top py-2 bg-light">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary btn-sm px-3">Simpan</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <!-- Modal Buat List Baru (SRS-F-17 - Auto-Ownership) -->
+    @include('tasks.partials.modal-create-list')
 
     <!-- Bootstrap 5.3 Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

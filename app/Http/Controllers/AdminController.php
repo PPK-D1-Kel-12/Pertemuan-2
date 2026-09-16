@@ -19,7 +19,7 @@ class AdminController extends Controller
     {
         $currentUser = $this->mockService->getCurrentUser();
         $users = $this->mockService->getUsers();
-        $lists = $this->mockService->getLists();
+        $lists = ListController::getLists();
         $notifications = $this->mockService->getNotifications();
 
         return view('admin.users', [
@@ -61,7 +61,7 @@ class AdminController extends Controller
     {
         $currentUser = $this->mockService->getCurrentUser();
         $users = $this->mockService->getUsers();
-        $lists = $this->mockService->getLists();
+        $lists = ListController::getLists();
         $logs = $this->mockService->getAdminLogs();
         $notifications = $this->mockService->getNotifications();
 
@@ -74,3 +74,4 @@ class AdminController extends Controller
         ]);
     }
 }
+
