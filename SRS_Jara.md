@@ -1,213 +1,88 @@
-# Software Requirements Specification (SRS)
-## Jara — Aplikasi Manajemen Task (Individual & Tim)
-### Edisi: Atomic Cascade Deletion, Authorization Guard & Prepared Statements
-
-**Versi:** 1.0 (Revisi Pertemuan 3)  
-**Mata Kuliah:** Praktikum Pemrograman Platform Khusus (PPK)  
-**Status:** Disetujui untuk Implementasi  
-**Target Pengembang:** 2 Orang Anggota Tim  
+# Spesifikasi Kebutuhan Sistem (SRS)
+## Aplikasi Jara — Task & Team Management
 
 ---
 
-## 1. Pendahuluan
+## 1. Kebutuhan Fungsional Minggu Lalu (Pertemuan 2 — Baseline)
 
-### 1.1 Tujuan
-Dokumen ini mendefinisikan spesifikasi kebutuhan perangkat lunak untuk aplikasi **Jara**, sebuah sistem manajemen task berbasis web kolaboratif. Dokumen ini diperbarui secara khusus untuk mengakomodasi tiga kebutuhan inti baru:
-1. Pembuatan list dengan penugasan kepemilikan otomatis (*Auto-Ownership*) dan penghapusan list secara menyeluruh beserta seluruh relasi tugasnya secara atomik (*Atomic Cascade Deletion with Rollback*).
-2. Penolakan terhadap setiap request dari pengguna yang tidak berwenang (*Strict Authorization & HTTP 403 Forbidden*).
-3. Penerapan query parameter binding menggunakan **Prepared Statement** pada seluruh operasi basis data untuk pencegahan SQL Injection.
+Berikut adalah rekapitulasi kebutuhan fungsional dari iterasi minggu lalu yang dikelompokkan berdasarkan status implementasinya pada sistem:
 
-### 1.2 Ruang Lingkup
-Aplikasi Jara memfasilitasi manajemen task individual dan tim. Ruang lingkup revisi ini mencakup:
-- Pembuatan dan kepemilikan daftar tugas (*List*).
-- Mekanisme penghapusan kaskade yang bersifat *all-or-nothing* (ACID Transaction).
-- Kontrol akses berbasis peran dan kepemilikan data (*Role & Ownership-Based Access Control*).
-- Persistensi basis data yang aman dari eksploitasi injeksi SQL.
+### 1.1 Fitur yang Sudah Dikerjakan (Implemented)
 
-### 1.3 Definisi dan Istilah
-| Istilah | Definisi |
-|---|---|
-| **List (Daftar Tugas)** | Wadah pengelompokan satu atau lebih task yang dibuat oleh pengguna. |
-| **Owner (Pemilik List)** | Pengguna yang membuat list tersebut dan memiliki wewenang penuh atas modifikasi dan penghapusan list. |
-| **Atomic Deletion** | Operasi penghapusan kaskade bersyarat di mana seluruh entitas anak (task, kolaborator, riwayat catatan) terhapus bersamaan, atau dibatalkan sepenuhnya jika terjadi kegagalan. |
-| **Rollback** | Perintah pengembalian status basis data ke kondisi sebelum transaksi dimulai saat terjadi exception atau error. |
-| **Prepared Statement** | Teknik eksekusi kueri SQL di mana template kueri dikompilasi terlebih dahulu oleh DBMS dan parameter data dikirim secara terpisah untuk mencegah SQL Injection. |
-| **403 Forbidden** | Status kode HTTP yang menandakan bahwa server menolak mengeksekusi request karena klien tidak memiliki izin akses atas sumber daya tersebut. |
+| ID | Modul | Deskripsi Kebutuhan Fungsional | Status |
+|---|---|---|:---:|
+| **SRS-F-01** | Task Management | Sistem memungkinkan pengguna membuat task baru dengan atribut: judul, deskripsi, prioritas, deadline, dan status. | **Selesai** |
+| **SRS-F-02** | Task Management | Sistem memungkinkan pengguna mengedit dan menghapus task miliknya melalui antarmuka drawer detail task. | **Selesai** |
+| **SRS-F-03** | List Management | Sistem memungkinkan pengguna mengelompokkan task ke dalam daftar (list) serta membuat list baru. | **Selesai** |
+| **SRS-F-04** | List Management | Sistem memungkinkan pengguna memindahkan task antar list melalui menu dropdown detail task. | **Selesai** |
+| **SRS-F-05** | Task Attributes | Sistem menyediakan 3 tingkat prioritas task: *Tinggi*, *Sedang*, dan *Rendah* dengan visualisasi badge warna. | **Selesai** |
+| **SRS-F-06** | Task Attributes | Sistem memungkinkan pengguna menetapkan tanggal deadline pada task dan menampilkan indikator jatuh tempo. | **Selesai** |
+| **SRS-F-07** | Task Attributes | Sistem menyediakan penandaan status task (*To Do*, *In Progress*, *Selesai*) beserta pengelompokan baris task otomatis. | **Selesai** |
+| **SRS-F-08** | Kolaborasi | Sistem memungkinkan pemilik task menambahkan kolaborator ke sebuah task dengan role *Editor* atau *Viewer*. | **Selesai** |
+| **SRS-F-09** | Kolaborasi | Sistem memungkinkan pemilik task mengeluarkan/menghapus kolaborator dari task, serta kolaborator dapat keluar mandiri. | **Selesai** |
+| **SRS-F-11** | Pemantauan Progres | Sistem mencatat linimasa aktivitas perubahan status, penambahan anggota, dan penambahan catatan progres kronologis. | **Selesai** |
+| **SRS-F-14** | Admin Panel | Sistem menyediakan panel admin untuk menambahkan akun pengguna baru ke dalam sistem. | **Selesai** |
+| **SRS-F-15** | Admin Panel | Sistem menyediakan fitur bagi admin untuk menonaktifkan (*deactivate*) atau menghapus akun pengguna. | **Selesai** |
+| **SRS-F-16** | Admin Panel | Sistem mencatat dan menampilkan log audit aktivitas admin terkait manipulasi akun pengguna. | **Selesai** |
 
----
+### 1.2 Fitur yang Belum Dikerjakan (Pending / Backlog)
 
-## 2. Deskripsi Umum
-
-### 2.1 Perspektif Produk & Arsitektur
-Jara dikembangkan dengan arsitektur Model-View-Controller (MVC) menggunakan **Laravel (Blade Template + Bootstrap 5.3)** di sisi Front-End dan Database Engine relasional (MySQL / SQLite / MariaDB) di sisi Back-End.
-
-### 2.2 Karakteristik Pengguna & Hak Akses
-1. **List Owner:**
-   - Membuat list baru (otomatis menjadi owner).
-   - Menambah, mengubah, dan memindahkan task di dalam list miliknya.
-   - Menghapus list miliknya (menghapus seluruh task, kolaborator, dan catatan di dalamnya secara atomik).
-2. **Collaborator / Member:**
-   - Melihat list dan task yang dibagikan kepadanya.
-   - Mengubah status task dan menambahkan catatan progres jika diberi hak Editor.
-   - **Dilarang keras:** Menghapus list, mengubah nama list milik orang lain, atau menghapus task yang bukan miliknya.
-3. **Unauthorized User:**
-   - Pengguna luar atau pengguna yang tidak terdaftar dalam kepemilikan/kolaborasi list. Seluruh request dari pengguna ini **wajib ditolak (HTTP 403)**.
+| ID | Modul | Deskripsi Kebutuhan Fungsional | Status | Catatan Evaluasi |
+|---|---|---|:---:|---|
+| **SRS-F-10** | Notifikasi | Sistem mengirimkan notifikasi real-time / email kepada kolaborator saat ditambahkan ke dalam task. | **Belum Dikerjakan** | Belum diimplementasikan karena fokus awal pada struktur CRUD dan linimasa aktivitas lokal. |
+| **SRS-F-12** | Tim Dinamis | Sistem memungkinkan pembuatan dan pengelolaan struktur tim baru secara dinamis (beserta pergantian ketua tim). | **Belum Dikerjakan** | Masih menggunakan data mock statis tim ("Tim Praktikum PPK"), belum ada antarmuka kelola tim. |
+| **SRS-F-13** | Task Tim Dinamis | Sistem menyaring visibilitas task tim secara dinamis berdasarkan keanggotaan tim pengguna yang login. | **Belum Dikerjakan** | Filter saat ini baru sebatas *Dibuat oleh Saya* dan *Saya sebagai Kolaborator*. |
 
 ---
 
-## 3. Kebutuhan Fungsional (Functional Requirements)
+## 2. Kebutuhan Fungsional Minggu Ini (Pertemuan 3 — Added Features)
 
-### 3.1 Modul List & Kepemilikan (List Ownership)
-| ID | Deskripsi Kebutuhan | Penanggung Jawab |
-|---|---|---|
-| **SRS-F-01** | Pengguna yang sedang login dapat membuat daftar tugas (List) baru dengan memasukkan nama list. | Anggota 1 (UI) & Anggota 2 (Backend) |
-| **SRS-F-02** | Sistem secara otomatis menetapkan ID pengguna yang sedang aktif sebagai `owner_id` dari list yang baru dibuat. | Anggota 2 (Backend Logic) |
-| **SRS-F-03** | Tampilan antarmuka sidebar wajib membedakan secara visual antara List yang dimiliki pengguna (*Owner*) dan List yang dibagikan kepadanya (*Collaborator*). | Anggota 1 (Front-End) |
+Iterasi minggu ini berfokus pada 3 User Story baru:
+1. **User Story 1:** Pembuatan list baru dengan kepemilikan otomatis (*Auto-Owner*) serta penghapusan list kaskade bersyarat atomik (*Atomic Cascade Deletion with Rollback*).
+2. **User Story 2:** Penolakan terhadap request dari pengguna yang tidak berwenang (*Unauthorized Request Rejection / HTTP 403*).
+3. **User Story 3:** Keharusan menggunakan **Prepared Statement** pada kueri basis data.
 
-### 3.2 Modul Penghapusan Kaskade Atomik (Atomic Cascade Deletion)
-| ID | Deskripsi Kebutuhan | Penanggung Jawab |
-|---|---|---|
-| **SRS-F-04** | Hanya pemilik list (*Owner*) yang memiliki akses dan hak untuk menghapus list tersebut. | Anggota 2 (Backend Auth) |
-| **SRS-F-05** | Sistem wajib menyediakan modal dialog konfirmasi penghapusan list yang memberikan peringatan tegas mengenai jumlah task dan kolaborator yang akan ikut terhapus. | Anggota 1 (Front-End UX) |
-| **SRS-F-06** | Saat list dihapus, sistem wajib menghapus seluruh entitas terkait secara berurutan: **Catatan Progres $\to$ Kolaborator Task $\to$ Task $\to$ List**. | Anggota 2 (Backend DB) |
-| **SRS-F-07** | Seluruh proses penghapusan pada SRS-F-06 wajib dibungkus dalam **Database Transaction**. Jika salah satu langkah penghapusan gagal, sistem wajib melakukan **ROLLBACK** penuh sehingga tidak ada data yang terhapus sebagian. | Anggota 2 (Backend Integrity) |
-| **SRS-F-08** | Sistem harus memberikan feedback antarmuka (Alert/Toast) yang jelas jika operasi penghapusan berhasil atau jika terjadi kegagalan/rollback. | Anggota 1 (Front-End UI) |
+### 2.1 Matriks Kebutuhan Fungsional & Pembagian Kerja (2 Orang)
 
-### 3.3 Modul Otorisasi & Penolakan Akses (Authorization & Error 403)
-| ID | Deskripsi Kebutuhan | Penanggung Jawab |
-|---|---|---|
-| **SRS-F-09** | Antarmuka pengguna wajib menyembunyikan (*hide*) atau menonaktifkan (*disable*) tombol "Hapus List" jika pengguna yang sedang melihat bukan pemilik sah list tersebut. | Anggota 1 (Front-End UI Guard) |
-| **SRS-F-10** | Sistem di sisi server wajib memvalidasi kepemilikan pada setiap HTTP Request (POST, PUT, DELETE) yang ditujukan ke sumber daya list/task. | Anggota 2 (Middleware / Policy) |
-| **SRS-F-11** | Setiap request dari pengguna yang tidak berwenang wajib ditolak langsung dengan respon **HTTP 403 Forbidden**. | Anggota 2 (Backend Controller) |
-| **SRS-F-12** | Sistem menyediakan halaman khusus penanganan error 403 (`resources/views/errors/403.blade.php`) yang ramah pengguna dan dilengkapi tombol navigasi kembali ke dashboard. | Anggota 1 (Front-End Error Page) |
-
-### 3.4 Modul Keamanan Basis Data (Prepared Statements)
-| ID | Deskripsi Kebutuhan | Penanggung Jawab |
-|---|---|---|
-| **SRS-F-13** | Seluruh kueri basis data (Create, Read, Update, Delete) pada modul List dan Task wajib menggunakan **Prepared Statement** dengan parameter binding (`?` atau named parameters `:param`). | Anggota 2 (Data Layer) |
-| **SRS-F-14** | Form input pada antarmuka pengguna wajib dilengkapi validasi sisi klien untuk memastikan integritas tipe dan panjang karakter sebelum dikirim ke server. | Anggota 1 (Front-End Validation) |
+| ID | User Story Terkait | Deskripsi Kebutuhan Fungsional | Penanggung Jawab | Deliverable / Komponen |
+|---|---|---|:---:|---|
+| **SRS-F-17** | US 1: Auto-Owner List | Pengguna dapat membuat daftar tugas (List) baru. Sistem secara otomatis menetapkan ID pembuat sebagai pemilik sah list (`owner_id = auth_id`). | **Anggota 1** (UI Form Modal)<br>**Anggota 2** (Backend Insert Logic) | • `resources/views/tasks/partials/modal-create-list.blade.php`<br>• `app/Http/Controllers/ListController.php` |
+| **SRS-F-18** | US 1: Indikator Kepemilikan | Antarmuka sidebar menampilkan status pembeda visual yang jelas antara List yang dimiliki (*Badge Owner*) dan List di mana pengguna hanya sebagai anggota/kolaborator. | **Anggota 1** (Front-End) | • `resources/views/layouts/app.blade.php` |
+| **SRS-F-19** | US 1: Modal Safeguard Hapus | Sistem menyediakan modal konfirmasi interaktif sebelum menghapus list, menampilkan jumlah task dan anggota di dalamnya yang akan ikut terhapus permanen. | **Anggota 1** (Front-End) | • `resources/views/tasks/partials/modal-delete-list.blade.php` |
+| **SRS-F-20** | US 1: Cascade Deletion | Sistem menghapus seluruh entitas anak secara berantai saat list dihapus: **Catatan Progres $\to$ Kolaborator Task $\to$ Seluruh Task $\to$ Entitas List**. | **Anggota 2** (Back-End) | • `app/Services/ListService.php` / Query Cascade Engine |
+| **SRS-F-21** | US 1: Atomic Rollback | Penghapusan list dibungkus dalam mekanisme transaksi database (`DB::beginTransaction`). Jika terjadi kegagalan/error pada salah satu langkah kaskade, sistem membatalkan seluruh operasi (`DB::rollBack()`). | **Anggota 2** (Back-End) | • `app/Http/Controllers/ListController.php` (`try-catch` rollback block) |
+| **SRS-F-22** | US 1: Notifikasi Rollback UI | Antarmuka pengguna menyajikan flash alert / toast peringatan ketika terjadi rollback transaksi atau kegagalan penghapusan. | **Anggota 1** (Front-End) | • `resources/views/layouts/app.blade.php` (Flash toast component) |
+| **SRS-F-23** | US 2: UI Guard (Hide/Disable) | Antarmuka pengguna otomatis menyembunyikan atau menonaktifkan tombol "Hapus List" jika pengguna yang sedang aktif bukan pemilik dari list tersebut. | **Anggota 1** (Front-End) | • `resources/views/layouts/app.blade.php` (Kondisional Blade Auth check) |
+| **SRS-F-24** | US 2: Server-Side Authorization | Sistem memeriksa hak akses di sisi server untuk setiap HTTP request mutasi (POST, PUT, DELETE). Akses modifikasi/penghapusan list oleh user non-owner langsung ditolak. | **Anggota 2** (Back-End) | • `app/Http/Middleware/EnsureListOwner.php` / `ListPolicy.php` |
+| **SRS-F-25** | US 2: Respon HTTP 403 | Server mengembalikan kode status **HTTP 403 Forbidden** secara konsisten jika terdeteksi request tidak berwenang. | **Anggota 2** (Back-End) | • `abort(403, 'Akses Ditolak: Anda bukan pemilik list ini.')` |
+| **SRS-F-26** | US 2: Halaman Error 403 | Sistem menyediakan tampilan halaman khusus untuk error 403 yang responsif, menyajikan pesan penolakan yang jelas, dan tautan kembali ke dashboard. | **Anggota 1** (Front-End) | • `resources/views/errors/403.blade.php` |
+| **SRS-F-27** | US 3: Prepared Statements DB | Seluruh operasi manipulasi basis data (SELECT, INSERT, UPDATE, DELETE) pada modul List dan Task wajib menggunakan kueri berparameter (*Parameterized Binding / Prepared Statement*) guna mencegah SQL Injection. | **Anggota 2** (Back-End) | • Database Service / Repository dengan PDO Binding (`?` atau `:param`) |
+| **SRS-F-28** | US 3: Validasi Form Klien | Form input pembuatan list dan task dilengkapi validasi sisi klien (tipe data, karakter khusus, dan panjang string) untuk mencegah input berbahaya sebelum kueri dieksekusi. | **Anggota 1** (Front-End) | • Form validation attributes & JS handler di Blade |
 
 ---
 
-## 4. Kebutuhan Non-Fungsional (Non-Functional Requirements)
+## 3. Kebutuhan Non-Fungsional Minggu Ini (Non-Functional Requirements)
 
-| ID | Parameter | Spesifikasi |
-|---|---|---|
-| **SRS-NF-01** | **Security (SQL Injection)** | Sistem 100% terlindung dari kerentanan SQL Injection melalui penerapan parameterized queries / prepared statements pada seluruh lapisan manipulasi data. |
-| **SRS-NF-02** | **Security (Access Control)** | Otorisasi diverifikasi ganda: di level presentasi (Blade condition) dan di level kernel server (Route Middleware / Policy). Penolakan menghasilkan HTTP 403. |
-| **SRS-NF-03** | **Data Integrity (Atomicity)** | Proses penghapusan memenuhi prinsip ACID (Atomicity, Consistency, Isolation, Durability) tanpa menyisakan data yatim (*no orphan records*). |
-| **SRS-NF-04** | **Usability (UX Safeguard)** | Pencegahan salah klik aksi destruktif melalui modal konfirmasi berlapis dan pesan peringatan bahaya (*danger state*). |
-| **SRS-NF-05** | **Performance** | Operasi atomik penghapusan list dengan $\le 50$ task diselesaikan dalam waktu kurang dari 1 detik pada beban server normal. |
-
----
-
-## 5. Struktur Basis Data & Alur Transaksi
-
-### 5.1 Skema Relasi Antar Entitas
-```text
-[users] 1 ────────────< N [lists]
-   │                         │
-   │ 1                       │ 1
-   │                         │
-   v N                       v N
-[task_collaborators] >──── [tasks]
-                             │ 1
-                             │
-                             v N
-                      [progress_notes]
-```
-
-### 5.2 Algoritma Transaksi Penghapusan Atomik
-```sql
-START TRANSACTION;
-BEGIN TRY:
-    -- 1. Hapus catatan progres task terkait list ini
-    DELETE FROM progress_notes WHERE task_id IN (SELECT id FROM tasks WHERE list_id = :list_id);
-    
-    -- 2. Hapus relasi kolaborator task terkait list ini
-    DELETE FROM task_collaborators WHERE task_id IN (SELECT id FROM tasks WHERE list_id = :list_id);
-    
-    -- 3. Hapus seluruh task di dalam list ini
-    DELETE FROM tasks WHERE list_id = :list_id;
-    
-    -- 4. Hapus entitas list utama (hanya jika pemilik sah)
-    DELETE FROM lists WHERE id = :list_id AND owner_id = :auth_user_id;
-
-    COMMIT;
-END TRY
-BEGIN CATCH:
-    ROLLBACK;
-    THROW EXCEPTION;
-END CATCH;
-```
+| ID | Parameter | Spesifikasi | Penanggung Jawab |
+|---|---|---|:---:|
+| **SRS-NF-01** | **Security (SQL Injection)** | Sistem 100% terlindung dari kerentanan SQL Injection dengan melarang konkatenasi string SQL mentah dan mewajibkan pemisahan template kueri dari parameter input (*Prepared Statements*). | **Anggota 2** (Back-End) |
+| **SRS-NF-02** | **Security (Access Control)** | Otorisasi hak akses divalidasi ganda: di sisi presentasi antarmuka (*Blade UI Guard*) dan di sisi server (*Route Middleware / Policy*). Setiap pelanggaran wajib mengembalikan respon HTTP 403. | **Anggota 1** (UI)<br>**Anggota 2** (Server) |
+| **SRS-NF-03** | **Data Integrity (ACID Atomicity)** | Operasi penghapusan kaskade memenuhi prinsip Atomicity: seluruh entitas anak dan induk terhapus secara tuntas, atau dibatalkan seutuhnya (*Rollback*) tanpa meninggalkan data yatim (*orphan records*). | **Anggota 2** (Back-End) |
+| **SRS-NF-04** | **Usability (UX Safeguard)** | Pencegahan salah klik aksi berbahaya melalui penyediaan modal dialog konfirmasi peringatan merah (*danger state*) dan indikator jumlah data terdampak. | **Anggota 1** (Front-End) |
 
 ---
 
-## 6. Pembagian Kerja Tim (2 Orang Anggota)
+## 4. Rincian Tanggung Jawab 2 Orang Anggota
 
-Untuk menjamin efisiensi pengerjaan di mana **Front-End dikerjakan terlebih dahulu**, tanggung jawab dibagi ke dalam dua peran utama:
+### 🎨 **Anggota 1 — Lead Front-End & UI Security Specialist**
+1. **Navigasi & Visual Kepemilikan (SRS-F-18):** Merancang visualisasi kepemilikan list pada sidebar (*Owner badge* vs *Collaborator*).
+2. **Modal Safeguard Konfirmasi Kaskade (SRS-F-19, SRS-NF-04):** Membuat modal peringatan bahaya sebelum hapus list beserta ringkasan jumlah task/anggota yang akan terhapus.
+3. **UI Guarding (SRS-F-23, SRS-NF-02):** Menyembunyikan atau menonaktifkan tombol hapus jika bukan owner list (`@if($list->owner_id === Auth::id())`).
+4. **Halaman & Feedback Error (SRS-F-22, SRS-F-26):** Mendesain halaman `resources/views/errors/403.blade.php` dan komponen banner/toast saat transaksi mengalami rollback.
+5. **Validasi Form Klien (SRS-F-17, SRS-F-28):** Menambahkan validasi input form pembuatan list/task di sisi antarmuka pengguna.
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                      PROJEK JARA                         │
-├────────────────────────────┬─────────────────────────────┤
-│   ANGGOTA 1 (FRONT-END)    │    ANGGOTA 2 (BACK-END)     │
-│   UI/UX & Client Security  │  DB, Integrity & Server Sec │
-├────────────────────────────┼─────────────────────────────┤
-│ • UI List Sidebar & Owner  │ • Schema DB & Migration     │
-│ • Modal Safeguard Kaskade  │ • Prepared Statements Layer │
-│ • Role-based UI Guards     │ • Atomic Engine & Rollback  │
-│ • Halaman Error 403 & Toast│ • Auth Middleware & 403 API │
-└────────────────────────────┴─────────────────────────────┘
-```
-
-### 6.1 Matriks RACI (Responsible, Accountable, Consulted, Informed)
-| Modul / Komponen Tugas | Anggota 1 (Front-End) | Anggota 2 (Back-End) |
-|---|:---:|:---:|
-| **SRS Bagian UI/UX & Fungsional Klien** | **R / A** | C / I |
-| **SRS Bagian Database, Keamanan & Transaksi** | C / I | **R / A** |
-| **Tampilan Sidebar List & Badge Kepemilikan (Owner vs Member)** | **R / A** | C |
-| **Modal Konfirmasi Hapus List Kaskade (Safeguard Warning)** | **R / A** | C |
-| **Halaman Error 403 Forbidden & Notifikasi UI Rollback** | **R / A** | I |
-| **Skema Migrasi Database Relasional** | C | **R / A** |
-| **Implementasi Prepared Statement pada Repository/Service** | I | **R / A** |
-| **Mekanisme Transaksi Atomik (BeginTransaction, Commit, Rollback)** | C | **R / A** |
-| **Middleware / Policy Verifikasi Otorisasi User (Tolak 403)** | C | **R / A** |
-| **Integrasi Front-End & Back-End (Form Submit & HTTP Handling)** | **R** | **R** |
-
-*Keterangan:*  
-- **R (Responsible):** Pelaksana utama yang menulis dokumen / memprogram kode.  
-- **A (Accountable):** Penanggung jawab utama keberhasilan fitur.  
-- **C (Consulted):** Rekan diskusi / peninjau kode (*code reviewer*).  
-- **I (Informed):** Mendapat laporan pembaruan setelah modul selesai.
-
-### 6.2 Rincian Deliverable & Berkas yang Dikerjakan
-
-#### **Tugas Anggota 1 (Lead Front-End & UI Security):**
-1. **Dokumen SRS:** Menyusun Bab 2 (Karakteristik Pengguna), Bab 3.1 & 3.3 (Kebutuhan Fungsional UI), serta Desain Wireframe/Modal.
-2. **Komponen Front-End:**
-   - `resources/views/layouts/app.blade.php`: Memodifikasi navigasi sidebar list agar menampilkan badge kepemilikan (*Owner*) dan menyembunyikan tombol hapus jika bukan pemilik.
-   - `resources/views/tasks/partials/modal-delete-list.blade.php`: Merancang modal konfirmasi kaskade interaktif yang mencantumkan bahaya terhapusnya seluruh task & anggota di dalamnya.
-   - `resources/views/tasks/partials/modal-create-list.blade.php`: Memperbarui modal pembuatan list baru dengan penjelasan auto-ownership.
-   - `resources/views/errors/403.blade.php`: Membuat halaman khusus *403 Forbidden* yang modern, responsif, dan informatif.
-   - `resources/views/tasks/partials/alerts.blade.php`: Menangani pesan flash error saat transaksi dibatalkan (*rollback*).
-
-#### **Tugas Anggota 2 (Lead Back-End & Data Security):**
-1. **Dokumen SRS:** Menyusun Bab 3.2 & 3.4 (Kebutuhan Fungsional Backend & Prepared Statement), Bab 4 (Non-Fungsional), dan Bab 5 (Skema Basis Data & Transaksi).
-2. **Komponen Back-End:**
-   - `database/migrations/`: Menyiapkan skema tabel relasional (`lists`, `tasks`, `task_collaborators`, `progress_notes`).
-   - `app/Http/Middleware/CheckListOwnership.php` atau `app/Policies/ListPolicy.php`: Mengamankan rute penghapusan dan pengubahan list agar melempar respon HTTP 403 jika user tidak berwenang.
-   - `app/Services/ListService.php` / `app/Repositories/`: Mengimplementasikan parameterized queries menggunakan Prepared Statements murni.
-   - `app/Http/Controllers/ListController.php`: Mengimplementasikan blok `DB::beginTransaction()`, kaskade delete, `DB::commit()`, dan `DB::rollBack()` di dalam blok `try-catch`.
-
----
-
-## 7. Rencana Pengujian (Acceptance Criteria)
-
-| Skenario Pengujian | Hasil yang Diharapkan | Penanggung Jawab Uji |
-|---|---|---|
-| User A membuat list baru "Sprint Final". | List terbuat dengan `owner_id = User A`. Di sidebar User A muncul badge "Pemilik". Di akun User B tidak ada tombol hapus untuk list tersebut. | Anggota 1 & Anggota 2 |
-| User B mencoba menembak `DELETE /lists/{id_milik_User_A}` via Postman / URL inspect. | Server menolak request, mengembalikan HTTP 403 Forbidden, dan data list tetap utuh. | Anggota 2 |
-| User A menghapus list "Sprint Final" yang memiliki 5 task, 3 kolaborator, dan 10 catatan. | Sistem menghapus seluruh 5 task, 3 kolaborator, 10 catatan, dan 1 list secara bersih tanpa sisa data. | Anggota 2 |
-| Terjadi kegagalan buatan (*simulated error*) di langkah penghapusan task. | Sistem langsung mengeksekusi `rollBack()`. List, task, kolaborator, dan catatan tidak berkurang sedikitpun. UI menampilkan pesan error rollback. | Anggota 1 & Anggota 2 |
-| Input nama list diisi string SQL Injection: `' OR '1'='1`. | Sistem memperlakukan input sebagai string teks biasa berkat prepared statement, tanpa eksekusi kode SQL ilegal. | Anggota 2 |
+### 🛠️ **Anggota 2 — Lead Back-End & Data Security Specialist**
+1. **Skema Basis Data & Logic Insert (SRS-F-17):** Merancang tabel relasional `lists`, `tasks`, `task_collaborators`, dan `progress_notes` dengan otomatisasi `owner_id`.
+2. **Prepared Statements Layer (SRS-F-27, SRS-NF-01):** Membangun kueri database menggunakan parameter binding murni pada seluruh operasi CRUD List & Task.
+3. **Engine Transaksi Atomik & Rollback (SRS-F-20, SRS-F-21, SRS-NF-03):** Mengimplementasikan blok `DB::beginTransaction()`, penghapusan kaskade berurutan, `DB::commit()`, dan `DB::rollBack()` saat terjadi kegagalan.
+4. **Middleware Otorisasi & Respon 403 (SRS-F-24, SRS-F-25, SRS-NF-02):** Membangun middleware/policy pemeriksa kepemilikan list di sisi server dan mengembalikan respon HTTP 403 jika request tidak sah.
