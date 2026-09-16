@@ -33,8 +33,10 @@
                     <input type="text" 
                            name="note" 
                            class="form-control form-control-sm" 
-                           placeholder="Ketik catatan progres atau update pekerjaan..." 
+                           placeholder="Ketik catatan progres atau update pekerjaan (maks. 1000 karakter)..." 
                            required 
+                           minlength="1"
+                           maxlength="1000"
                            autocomplete="off">
                     <button type="submit" class="btn btn-outline-primary btn-sm px-3">
                         <i class="bi bi-send-fill me-1"></i> Kirim Update

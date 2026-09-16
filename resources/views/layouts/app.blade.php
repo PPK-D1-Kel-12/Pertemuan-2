@@ -319,11 +319,14 @@
                             <i class="bi bi-folder2{{ ($currentListId ?? 1) == $list['id'] && !request()->routeIs('admin.*') ? '-open text-primary' : '' }}"></i> 
                             <span class="text-truncate">{{ $list['name'] }}</span>
                         </a>
-                        @if(count($lists ?? []) > 1)
+                        @php
+                            $canDeleteList = (($list['owner_id'] ?? 0) === ($currentUser['id'] ?? 0)) || (($currentUser['role'] ?? '') === 'admin');
+                        @endphp
+                        @if($canDeleteList && count($lists ?? []) > 1)
                             <form action="{{ route('lists.destroy', $list['id']) }}" method="POST" onsubmit="return confirm('Hapus list {{ $list['name'] }}?')">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-link btn-sm text-muted p-1 text-decoration-none opacity-50 hover-opacity-100" title="Hapus List">
+                                <button type="submit" class="btn btn-link btn-sm text-muted p-1 text-decoration-none opacity-50 hover-opacity-100" title="Hapus List (Pemilik Sah)">
                                     <i class="bi bi-trash" style="font-size: 0.75rem;"></i>
                                 </button>
                             </form>
@@ -487,9 +490,9 @@
                 <form action="{{ route('lists.store') }}" method="POST">
                     @csrf
                     <div class="modal-body p-3">
-                        <label class="form-label small fw-semibold">Nama List / Kategori</label>
-                        <input type="text" name="name" class="form-control form-control-sm" placeholder="Contoh: Sprint 2, Skripsi, Belanja" required autofocus>
-                        <small class="text-muted" style="font-size: 0.7rem;">Task dapat dikelompokkan ke dalam list ini (SRS-F-03).</small>
+                        <label class="form-label small fw-semibold">Nama List / Kategori <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control form-control-sm" placeholder="Contoh: Sprint 2, Skripsi, Belanja" required minlength="1" maxlength="100" autofocus>
+                        <small class="text-muted" style="font-size: 0.7rem;">Maksimal 100 karakter. Task dapat dikelompokkan ke dalam list ini (SRS-F-03).</small>
                     </div>
                     <div class="modal-footer border-top py-2 bg-light">
                         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
