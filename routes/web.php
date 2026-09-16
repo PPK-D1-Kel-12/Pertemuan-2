@@ -18,28 +18,28 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Manajemen List (Novelya: SRS-F-03, SRS-F-04)
+// Manajemen List (Novelya: SRS-F-03, SRS-F-04; Anggota 2: SRS-F-19)
 Route::prefix('lists')->name('lists.')->group(function () {
     Route::post('/', [ListController::class, 'store'])->name('store');
-    Route::delete('/{list}', [ListController::class, 'destroy'])->name('destroy');
+    Route::delete('/{list}', [ListController::class, 'destroy'])->middleware('list.owner')->name('destroy');
 });
 
-// Manajemen Task (Novelya, Joshua, Menza)
+// Manajemen Task (Novelya, Joshua, Menza; Anggota 2: SRS-F-19)
 Route::prefix('tasks')->name('tasks.')->group(function () {
     Route::get('/', [TaskController::class, 'index'])->name('index');
     Route::post('/', [TaskController::class, 'store'])->name('store');
-    Route::put('/{task}', [TaskController::class, 'update'])->name('update');
-    Route::delete('/{task}', [TaskController::class, 'destroy'])->name('destroy');
-    Route::post('/{task}/move-list', [TaskController::class, 'moveList'])->name('move-list');
+    Route::put('/{task}', [TaskController::class, 'update'])->middleware('task.owner')->name('update');
+    Route::delete('/{task}', [TaskController::class, 'destroy'])->middleware('task.owner')->name('destroy');
+    Route::post('/{task}/move-list', [TaskController::class, 'moveList'])->middleware('task.owner')->name('move-list');
     
-    // Status & Tag Selesai (Joshua: SRS-F-07)
+    // Status & Tag Selesai (Joshua: SRS-F-07; Anggota 2: SRS-F-19)
     Route::post('/{task}/status', [TaskController::class, 'updateStatus'])->name('update-status');
     
-    // Fitur Inti Menza: Manajemen Kolaborator (SRS-F-08, SRS-F-09)
-    Route::post('/{task}/collaborators', [TaskController::class, 'addCollaborator'])->name('collaborators.add');
+    // Fitur Inti Menza: Manajemen Kolaborator (SRS-F-08, SRS-F-09; Anggota 2: SRS-F-19)
+    Route::post('/{task}/collaborators', [TaskController::class, 'addCollaborator'])->middleware('task.owner')->name('collaborators.add');
     Route::delete('/{task}/collaborators/{user}', [TaskController::class, 'removeCollaborator'])->name('collaborators.remove');
     
-    // Fitur Inti Menza: Pemantauan Progres & Linimasa (SRS-F-11)
+    // Fitur Inti Menza: Pemantauan Progres & Linimasa (SRS-F-11; Anggota 2: SRS-F-19)
     Route::post('/{task}/progress-notes', [TaskController::class, 'addProgressNote'])->name('progress-notes.add');
 });
 
