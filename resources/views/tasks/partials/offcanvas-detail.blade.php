@@ -1,9 +1,9 @@
 @if($activeTask)
-<div class="offcanvas offcanvas-end show shadow" tabindex="-1" id="taskDetailOffcanvas" style="width: 600px; max-width: 95vw;" data-bs-backdrop="true">
-    <div class="offcanvas-header border-bottom bg-light py-3">
+<div class="offcanvas offcanvas-end show shadow-lg" tabindex="-1" id="taskDetailOffcanvas" style="width: 600px; max-width: 95vw; border-left: 1px solid #e2e8f0;" data-bs-backdrop="true">
+    <div class="offcanvas-header border-bottom py-3" style="background: #f8fafc;">
         <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-secondary-subtle text-secondary border" style="font-size: 0.7rem;">
-                TASK-{{ $activeTask['id'] }}
+            <span class="badge fw-semibold" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.2); font-size: 0.72rem; font-family: monospace;">
+                #TASK-{{ $activeTask['id'] }}
             </span>
             <span class="text-muted small">|</span>
             @php
@@ -14,7 +14,7 @@
                 <form action="{{ route('tasks.move-list', $activeTask['id']) }}" method="POST" class="d-inline-flex align-items-center gap-1">
                     @csrf
                     <i class="bi bi-folder2-open text-primary" style="font-size: 0.85rem;"></i>
-                    <select name="list_id" class="form-select form-select-sm py-0 px-2 border-0 bg-white shadow-none text-dark fw-semibold" style="font-size: 0.75rem; width: auto;" onchange="this.form.submit()" title="Pindah List (SRS-F-04)">
+                    <select name="list_id" class="form-select form-select-sm py-0 px-2 border-0 shadow-none text-dark fw-semibold" style="background: #ffffff; border: 1px solid #e2e8f0 !important; font-size: 0.75rem; width: auto; border-radius: 6px;" onchange="this.form.submit()" title="Pindah List (SRS-F-04)">
                         @foreach($lists as $l)
                             <option value="{{ $l['id'] }}" {{ $l['id'] === $activeTask['list_id'] ? 'selected' : '' }}>
                                 {{ $l['name'] }}
@@ -35,7 +35,7 @@
                 <form action="{{ route('tasks.destroy', $activeTask['id']) }}" method="POST" onsubmit="return confirm('Hapus task ini secara permanen?')">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size: 0.75rem;" title="Hapus Task">
+                    <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size: 0.75rem; border-radius: 6px;" title="Hapus Task">
                         <i class="bi bi-trash me-1"></i> Hapus
                     </button>
                 </form>
@@ -65,14 +65,14 @@
                 @if($canChangeStatus)
                     <form action="{{ route('tasks.update-status', $activeTask['id']) }}" method="POST" class="d-inline">
                         @csrf
-                        <div class="btn-group btn-group-sm" role="group">
-                            <button type="submit" name="status" value="To Do" class="btn {{ $activeTask['status'] === 'To Do' ? 'btn-secondary text-white' : 'btn-outline-secondary' }}">
+                        <div class="btn-group btn-group-sm p-1 rounded-2" role="group" style="background: #eef2f6;">
+                            <button type="submit" name="status" value="To Do" class="btn btn-sm py-0 px-2 border-0 rounded-1 {{ $activeTask['status'] === 'To Do' ? 'bg-white text-dark shadow-sm fw-semibold' : 'text-muted' }}" style="font-size: 0.75rem;">
                                 To Do
                             </button>
-                            <button type="submit" name="status" value="In Progress" class="btn {{ $activeTask['status'] === 'In Progress' ? 'btn-primary text-white' : 'btn-outline-primary' }}">
+                            <button type="submit" name="status" value="In Progress" class="btn btn-sm py-0 px-2 border-0 rounded-1 {{ $activeTask['status'] === 'In Progress' ? 'bg-white text-primary shadow-sm fw-semibold' : 'text-muted' }}" style="font-size: 0.75rem;">
                                 In Progress
                             </button>
-                            <button type="submit" name="status" value="Selesai" class="btn {{ $activeTask['status'] === 'Selesai' ? 'btn-success text-white' : 'btn-outline-success' }}">
+                            <button type="submit" name="status" value="Selesai" class="btn btn-sm py-0 px-2 border-0 rounded-1 {{ $activeTask['status'] === 'Selesai' ? 'bg-white text-success shadow-sm fw-semibold' : 'text-muted' }}" style="font-size: 0.75rem;">
                                 <i class="bi bi-check2"></i> Selesai
                             </button>
                         </div>
@@ -92,7 +92,7 @@
                     if ($activeTask['priority'] === 'Tinggi') $prioClass = 'badge-priority-tinggi';
                     if ($activeTask['priority'] === 'Rendah') $prioClass = 'badge-priority-rendah';
                 @endphp
-                <span class="badge {{ $prioClass }}" style="font-size: 0.75rem;">
+                <span class="badge {{ $prioClass }} rounded-pill px-2" style="font-size: 0.72rem;">
                     <i class="bi bi-flag-fill me-1"></i> Prioritas {{ $activeTask['priority'] }}
                 </span>
             </div>

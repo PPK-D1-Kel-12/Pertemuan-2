@@ -14,10 +14,17 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         :root {
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
+            --primary-color: #6366f1; /* Electric Indigo (Linear style) */
+            --primary-hover: #4f46e5;
+            --primary-glow: rgba(99, 102, 241, 0.25);
             --bg-light: #f8fafc;
-            --sidebar-bg: #ffffff;
+            --sidebar-bg: #090d16; /* Obsidian / Deep Charcoal */
+            --sidebar-border: rgba(255, 255, 255, 0.08);
+            --sidebar-text: #94a3b8;
+            --sidebar-text-muted: #64748b;
+            --sidebar-text-active: #ffffff;
+            --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
+            --sidebar-active-bg: rgba(99, 102, 241, 0.15);
             --border-color: #e2e8f0;
             --text-dark: #0f172a;
             --text-muted: #64748b;
@@ -28,13 +35,20 @@
             background-color: var(--bg-light);
             color: var(--text-dark);
             min-height: 100vh;
+            letter-spacing: -0.01em;
         }
 
-        /* Sidebar Styling */
+        /* Sleek Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+        .sidebar ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); }
+
+        /* Sidebar Styling (Linear Dark Obsidian) */
         .sidebar {
             width: 260px;
-            background-color: var(--sidebar-bg);
-            border-right: 1px solid var(--border-color);
+            background: linear-gradient(180deg, #0d121f 0%, #090d16 100%);
+            border-right: 1px solid var(--sidebar-border);
             min-height: 100vh;
             position: fixed;
             top: 0;
@@ -42,12 +56,13 @@
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            transition: all 0.3s ease;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            color: var(--sidebar-text);
         }
 
         .main-content {
             margin-left: 260px;
-            padding: 1.5rem 2rem;
+            padding: 1.75rem 2.25rem;
             min-height: 100vh;
         }
 
@@ -67,24 +82,33 @@
         .nav-link-custom {
             display: flex;
             align-items: center;
-            padding: 0.625rem 0.875rem;
-            color: var(--text-muted);
+            padding: 0.55rem 0.8rem;
+            color: var(--sidebar-text);
             border-radius: 0.5rem;
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.86rem;
             transition: all 0.15s ease-in-out;
             text-decoration: none;
             margin-bottom: 2px;
         }
 
-        .nav-link-custom:hover, .nav-link-custom.active {
-            background-color: #f1f5f9;
-            color: var(--primary-color);
+        .nav-link-custom:hover {
+            background-color: var(--sidebar-hover-bg);
+            color: #ffffff;
+        }
+
+        .nav-link-custom.active {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.18) 0%, rgba(99, 102, 241, 0.05) 100%);
+            color: #ffffff;
+            font-weight: 600;
+            border-left: 3px solid #6366f1;
+            padding-left: calc(0.8rem - 3px);
         }
 
         .nav-link-custom i {
-            margin-right: 0.75rem;
-            font-size: 1.1rem;
+            margin-right: 0.65rem;
+            font-size: 1.05rem;
+            opacity: 0.85;
         }
 
         /* Avatar Stack */
@@ -100,15 +124,15 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 700;
             color: #ffffff;
             border: 2px solid #ffffff;
             margin-left: -8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             position: relative;
             cursor: pointer;
-            transition: transform 0.15s ease;
+            transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .avatar-circle:first-child {
@@ -116,44 +140,82 @@
         }
 
         .avatar-circle:hover {
-            transform: translateY(-2px) scale(1.1);
+            transform: translateY(-2px) scale(1.15);
             z-index: 5;
         }
 
         .avatar-lg {
-            width: 40px;
-            height: 40px;
-            font-size: 0.95rem;
+            width: 36px;
+            height: 36px;
+            font-size: 0.85rem;
             border-width: 2px;
         }
 
-        /* Task Row / Todoist Style */
+        /* Task Row / Linear Style */
         .task-item-row {
             background: #ffffff;
             border: 1px solid var(--border-color);
             border-radius: 0.625rem;
-            padding: 0.875rem 1.125rem;
-            margin-bottom: 0.5rem;
-            transition: all 0.2s ease;
+            padding: 0.85rem 1.15rem;
+            margin-bottom: 0.45rem;
+            transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, border-color 0.18s ease;
             cursor: pointer;
             position: relative;
         }
 
         .task-item-row:hover {
             border-color: #cbd5e1;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-            transform: translateY(-1px);
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 4px 6px -2px rgba(15, 23, 42, 0.02);
+            transform: translateY(-2px);
+        }
+
+        .task-item-row.priority-tinggi {
+            border-left: 4px solid #ef4444 !important;
+        }
+
+        .task-item-row.priority-sedang {
+            border-left: 4px solid #f59e0b !important;
+        }
+
+        .task-item-row.priority-rendah {
+            border-left: 4px solid #94a3b8 !important;
         }
 
         .task-item-row.completed {
             background-color: #f8fafc;
             opacity: 0.75;
+            border-left: 4px solid #10b981 !important;
         }
 
         .task-item-row.completed .task-title {
             text-decoration: line-through;
             color: var(--text-muted);
         }
+
+        .task-actions {
+            opacity: 0;
+            transform: translateX(4px);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+
+        .task-item-row:hover .task-actions {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Status Dot Indicator */
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-dot.todo { background-color: #94a3b8; }
+        .status-dot.progress { 
+            background-color: #6366f1; 
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.7);
+        }
+        .status-dot.completed { background-color: #10b981; }
 
         /* Timeline Styling */
         .timeline {
@@ -213,23 +275,26 @@
             color: var(--text-muted);
         }
 
-        /* Custom Badges */
+        /* Refined Custom Badges */
         .badge-priority-tinggi {
-            background-color: #fee2e2;
-            color: #ef4444;
-            border: 1px solid #fecaca;
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fee2e2;
+            font-weight: 600;
         }
 
         .badge-priority-sedang {
-            background-color: #fef3c7;
+            background-color: #fffbeb;
             color: #d97706;
-            border: 1px solid #fde68a;
+            border: 1px solid #fef3c7;
+            font-weight: 600;
         }
 
         .badge-priority-rendah {
-            background-color: #f1f5f9;
+            background-color: #f8fafc;
             color: #64748b;
             border: 1px solid #e2e8f0;
+            font-weight: 600;
         }
 
         .badge-role-editor {
@@ -252,34 +317,34 @@
 </head>
 <body>
 
-    <!-- Sidebar -->
+    <!-- Sidebar (Linear Obsidian Theme) -->
     <aside class="sidebar p-3" id="mainSidebar">
         <!-- Brand Header -->
-        <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
+        <div class="d-flex align-items-center justify-content-between pb-3 mb-3" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
             <div class="d-flex align-items-center gap-2">
-                <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 34px; height: 34px;">
-                    <i class="bi bi-check2-all fs-5"></i>
+                <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); box-shadow: 0 0 16px rgba(99, 102, 241, 0.45);">
+                    <i class="bi bi-check2-all fs-5 text-white"></i>
                 </div>
                 <div>
-                    <h5 class="mb-0 fw-bold tracking-tight">Jara</h5>
-                    <small class="text-muted" style="font-size: 0.7rem;">Task & Kolaborasi Tim</small>
+                    <h5 class="mb-0 fw-bold text-white tracking-tight" style="letter-spacing: -0.02em;">Jara<span style="color: #818cf8;">.</span></h5>
+                    <small style="color: #64748b; font-size: 0.7rem; font-weight: 500;">Task & Kolaborasi Tim</small>
                 </div>
             </div>
-            <button class="btn btn-sm btn-light d-lg-none" id="closeSidebarBtn">
+            <button class="btn btn-sm btn-outline-secondary border-0 text-muted d-lg-none" id="closeSidebarBtn">
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
 
         <!-- Current Persona / Profile Card -->
-        <div class="card border-0 bg-light rounded-3 p-2 mb-3">
+        <div class="rounded-3 p-2 mb-3" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.07);">
             <div class="d-flex align-items-center gap-2">
-                <div class="avatar-circle avatar-lg" style="background-color: {{ $currentUser['color'] ?? '#4f46e5' }};">
+                <div class="avatar-circle avatar-lg" style="background-color: {{ $currentUser['color'] ?? '#6366f1' }};">
                     {{ $currentUser['avatar'] ?? 'ME' }}
                 </div>
                 <div class="overflow-hidden flex-grow-1">
-                    <div class="fw-semibold text-truncate small">{{ $currentUser['name'] ?? 'Menza' }}</div>
+                    <div class="fw-semibold text-truncate small text-white">{{ $currentUser['name'] ?? 'Menza' }}</div>
                     <div class="d-flex align-items-center gap-1">
-                        <span class="badge bg-white text-primary border" style="font-size: 0.65rem;">
+                        <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.35); font-size: 0.62rem;">
                             {{ $currentUser['id'] === 1 ? 'Pemilik Task' : ($currentUser['role'] === 'admin' ? 'Admin' : 'User') }}
                         </span>
                     </div>
@@ -289,7 +354,7 @@
 
         <!-- Navigation Links -->
         <div class="flex-grow-1 overflow-auto pe-1">
-            <div class="text-uppercase text-muted fw-bold mb-2" style="font-size: 0.65rem; letter-spacing: 0.05em;">Tampilan Utama</div>
+            <div class="fw-bold mb-2" style="color: #475569; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;">Tampilan Utama</div>
             <nav class="nav flex-column mb-3">
                 <a class="nav-link-custom {{ ($currentFilter ?? 'all') === 'all' ? 'active' : '' }}" href="{{ route('tasks.index', ['list_id' => $currentListId ?? 1, 'filter' => 'all']) }}">
                     <i class="bi bi-list-task"></i> Semua Task
@@ -305,10 +370,10 @@
                 </a>
             </nav>
 
-            <!-- Lists Section (SRS-F-03 - Tugas Novelya) -->
-            <div class="d-flex align-items-center justify-content-between text-uppercase text-muted fw-bold mb-2" style="font-size: 0.65rem; letter-spacing: 0.05em;">
+            <!-- Lists Section (SRS-F-03 - Tugas Novelya; SRS-F-17/F-18 - Joshua/Menza) -->
+            <div class="d-flex align-items-center justify-content-between fw-bold mb-2" style="color: #475569; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;">
                 <span>Daftar / List</span>
-                <button class="btn btn-link btn-sm p-0 text-primary text-decoration-none fw-bold" data-bs-toggle="modal" data-bs-target="#createListModal" title="Buat List Baru">
+                <button class="btn btn-link btn-sm p-0 text-decoration-none fw-bold" style="color: #818cf8; font-size: 0.72rem;" data-bs-toggle="modal" data-bs-target="#createListModal" title="Buat List Baru (SRS-F-17)">
                     <i class="bi bi-plus-circle-fill"></i> Tambah
                 </button>
             </div>
@@ -316,16 +381,16 @@
                 @foreach($lists ?? [] as $list)
                     <div class="d-flex align-items-center justify-content-between mb-1">
                         <a class="nav-link-custom flex-grow-1 {{ ($currentListId ?? 1) == $list['id'] && !request()->routeIs('admin.*') ? 'active' : '' }}" href="{{ route('tasks.index', ['list_id' => $list['id'], 'filter' => $currentFilter ?? 'all']) }}">
-                            <i class="bi bi-folder2{{ ($currentListId ?? 1) == $list['id'] && !request()->routeIs('admin.*') ? '-open text-primary' : '' }}"></i> 
+                            <i class="bi bi-folder2{{ ($currentListId ?? 1) == $list['id'] && !request()->routeIs('admin.*') ? '-open text-info' : '' }}"></i> 
                             <span class="text-truncate me-1">{{ $list['name'] }}</span>
                         </a>
                         <div class="d-flex align-items-center gap-1 ms-1">
                             @if(!empty($list['is_owner']))
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-1 py-0 rounded" style="font-size: 0.62rem;" title="Anda adalah Pemilik List ini (SRS-F-17)">
+                                <span class="badge" style="background: rgba(99, 102, 241, 0.25); color: #c7d2fe; border: 1px solid rgba(99, 102, 241, 0.4); font-size: 0.62rem;" title="Anda adalah Pemilik List ini (SRS-F-17)">
                                     <i class="bi bi-star-fill text-warning me-1"></i>Owner
                                 </span>
                             @else
-                                <span class="badge bg-light text-muted border px-1 py-0 rounded" style="font-size: 0.62rem;" title="List dibagikan kepada Anda">
+                                <span class="badge" style="background: rgba(255, 255, 255, 0.06); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.62rem;" title="List dibagikan kepada Anda">
                                     Member
                                 </span>
                             @endif
@@ -345,29 +410,29 @@
             </nav>
 
             <!-- Panel Admin (SRS-F-14, SRS-F-15, SRS-F-16 - Tugas Iza) -->
-            <div class="text-uppercase text-muted fw-bold mb-2" style="font-size: 0.65rem; letter-spacing: 0.05em;">Panel Admin (Iza)</div>
+            <div class="fw-bold mb-2" style="color: #475569; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;">Panel Admin (Iza)</div>
             <nav class="nav flex-column mb-3">
                 <a class="nav-link-custom {{ request()->routeIs('admin.users') ? 'active' : '' }}" href="{{ route('admin.users') }}">
-                    <i class="bi bi-people-fill text-dark"></i> Kelola Pengguna
+                    <i class="bi bi-people-fill"></i> Kelola Pengguna
                 </a>
                 <a class="nav-link-custom {{ request()->routeIs('admin.logs') ? 'active' : '' }}" href="{{ route('admin.logs') }}">
-                    <i class="bi bi-journal-text text-dark"></i> Log Aktivitas Admin
+                    <i class="bi bi-journal-text"></i> Log Aktivitas Admin
                 </a>
             </nav>
 
             <!-- Team Collaboration Info -->
-            <div class="text-uppercase text-muted fw-bold mb-2" style="font-size: 0.65rem; letter-spacing: 0.05em;">Tim Terhubung</div>
-            <div class="p-2 border rounded-3 bg-white mb-3" style="font-size: 0.8rem;">
-                <div class="fw-semibold text-truncate mb-1"><i class="bi bi-shield-check text-primary me-1"></i> Tim Praktikum PPK</div>
-                <div class="text-muted" style="font-size: 0.72rem;">Menza, Budi, Siti, Joshua, Novelya, Iza</div>
+            <div class="fw-bold mb-2" style="color: #475569; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;">Tim Terhubung</div>
+            <div class="p-2 rounded-3 mb-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.78rem;">
+                <div class="fw-semibold text-truncate mb-1 text-white"><i class="bi bi-shield-check text-info me-1"></i> Tim Praktikum PPK</div>
+                <div style="color: #64748b; font-size: 0.72rem;">Menza, Budi, Siti, Joshua, Novelya, Iza</div>
             </div>
         </div>
 
         <!-- Footer / Reset Data -->
-        <div class="pt-3 border-top mt-auto">
+        <div class="pt-3 mt-auto" style="border-top: 1px solid rgba(255, 255, 255, 0.08);">
             <form action="{{ route('reset-data') }}" method="POST" onsubmit="return confirm('Reset semua data sampel ke awal?')">
                 @csrf
-                <button type="submit" class="btn btn-outline-secondary btn-sm w-100 py-1" style="font-size: 0.75rem;">
+                <button type="submit" class="btn btn-sm w-100 py-1" style="background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); color: #94a3b8; font-size: 0.75rem; transition: all 0.2s;">
                     <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Data Sampel
                 </button>
             </form>
@@ -383,7 +448,7 @@
                     <i class="bi bi-list fs-5"></i>
                 </button>
                 <div>
-                    <h4 class="fw-bold mb-0">
+                    <h4 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.02em;">
                         @yield('header_title', 'Manajemen Task')
                     </h4>
                     <p class="text-muted small mb-0">
@@ -393,14 +458,20 @@
             </div>
 
             <div class="d-flex align-items-center gap-2">
+                <!-- Tambah Task CTA (Linear Glow Button) -->
+                <button class="btn btn-sm d-flex align-items-center gap-1 px-3 py-1 text-white shadow-sm" data-bs-toggle="modal" data-bs-target="#createTaskModal" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
+                    <i class="bi bi-plus-lg"></i>
+                    <span class="d-none d-sm-inline">Task Baru</span>
+                </button>
+
                 <!-- Persona Switcher Dropdown (Fitur Demo Praktikum) -->
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-primary dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-bounding-box"></i>
-                        <span class="d-none d-md-inline">Lihat Sebagai:</span>
-                        <strong class="text-dark">{{ $currentUser['name'] }}</strong>
+                    <button class="btn btn-sm d-flex align-items-center gap-2 shadow-sm" type="button" data-bs-toggle="dropdown" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; font-weight: 500;">
+                        <i class="bi bi-person-bounding-box text-primary"></i>
+                        <span class="d-none d-md-inline text-muted small">Lihat:</span>
+                        <strong class="text-dark small">{{ $currentUser['name'] }}</strong>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="min-width: 250px;">
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-1" style="min-width: 250px; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1) !important;">
                         <li class="dropdown-header text-uppercase" style="font-size: 0.65rem;">Ganti Akun Demo (Uji Hak Akses)</li>
                         @foreach($users ?? [] as $user)
                             <li>
@@ -422,18 +493,18 @@
 
                 <!-- Notifications Dropdown (SRS-F-10 Preview) -->
                 <div class="dropdown">
-                    <button class="btn btn-light btn-sm position-relative rounded-3 p-2" type="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-bell fs-6"></i>
+                    <button class="btn btn-sm position-relative rounded-3 p-2 shadow-sm" type="button" data-bs-toggle="dropdown" style="background: #ffffff; border: 1px solid #e2e8f0;">
+                        <i class="bi bi-bell text-secondary fs-6"></i>
                         @if(count($notifications ?? []) > 0)
                             <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
                                 <span class="visually-hidden">Notifikasi Baru</span>
                             </span>
                         @endif
                     </button>
-                    <div class="dropdown-menu dropdown-menu-end shadow-sm p-2" style="width: 320px;">
+                    <div class="dropdown-menu dropdown-menu-end shadow-sm border-0 p-2 mt-1" style="width: 320px; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1) !important;">
                         <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom mb-2">
-                            <span class="fw-semibold small">Notifikasi Kolaborator</span>
-                            <span class="badge bg-primary-subtle text-primary" style="font-size: 0.65rem;">{{ count($notifications ?? []) }} Baru</span>
+                            <span class="fw-semibold small text-dark">Notifikasi Kolaborator</span>
+                            <span class="badge" style="background: #e0e7ff; color: #4338ca; font-size: 0.65rem;">{{ count($notifications ?? []) }} Baru</span>
                         </div>
                         @forelse($notifications ?? [] as $notif)
                             <div class="p-2 mb-1 bg-light rounded-2" style="font-size: 0.78rem;">
