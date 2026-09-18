@@ -1,5 +1,5 @@
 @php
-    $isOwner = ($task['owner_id'] ?? 0) === ($currentUser['id'] ?? 0);
+    $isOwner = (($task['owner_id'] ?? 0) === ($currentUser['id'] ?? 0)) || (($currentUser['role'] ?? '') === 'admin');
     $myCollabRecord = null;
     foreach ($task['collaborators'] ?? [] as $c) {
         if ($c['user_id'] === ($currentUser['id'] ?? 0)) {

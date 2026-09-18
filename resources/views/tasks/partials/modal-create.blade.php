@@ -13,19 +13,20 @@
                     <!-- Judul Task -->
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Judul Task <span class="text-danger">*</span></label>
-                        <input type="text" name="title" class="form-control form-control-sm" placeholder="Contoh: Implementasi Form Tambah Kolaborator" required autofocus>
+                        <input type="text" name="title" class="form-control form-control-sm" placeholder="Contoh: Implementasi Form Tambah Kolaborator" required minlength="1" maxlength="255" autofocus>
+                        <small class="text-muted" style="font-size: 0.7rem;">Maksimal 255 karakter.</small>
                     </div>
 
                     <!-- Deskripsi -->
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Deskripsi</label>
-                        <textarea name="description" class="form-control form-control-sm" rows="3" placeholder="Jelaskan detail pekerjaan atau spesifikasi teknis..."></textarea>
+                        <textarea name="description" class="form-control form-control-sm" rows="3" maxlength="1000" placeholder="Jelaskan detail pekerjaan atau spesifikasi teknis (maks. 1000 karakter)..."></textarea>
                     </div>
 
                     <div class="row g-2 mb-3">
                         <!-- List Tujuan (SRS-F-03) -->
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">List / Kategori</label>
+                            <label class="form-label small fw-semibold">List / Kategori <span class="text-danger">*</span></label>
                             <select name="list_id" class="form-select form-select-sm" required>
                                 @foreach($lists ?? [] as $list)
                                     <option value="{{ $list['id'] }}" {{ ($currentListId ?? 1) == $list['id'] ? 'selected' : '' }}>
@@ -37,7 +38,7 @@
 
                         <!-- Prioritas (SRS-F-05) -->
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Prioritas</label>
+                            <label class="form-label small fw-semibold">Prioritas <span class="text-danger">*</span></label>
                             <select name="priority" class="form-select form-select-sm" required>
                                 <option value="Tinggi">Tinggi</option>
                                 <option value="Sedang" selected>Sedang</option>
@@ -48,8 +49,8 @@
 
                     <!-- Deadline (SRS-F-06) -->
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Deadline (Batas Waktu)</label>
-                        <input type="date" name="deadline" class="form-control form-control-sm" value="{{ date('Y-m-d', strtotime('+3 days')) }}" required>
+                        <label class="form-label small fw-semibold">Deadline (Batas Waktu) <span class="text-danger">*</span></label>
+                        <input type="date" name="deadline" class="form-control form-control-sm" value="{{ date('Y-m-d', strtotime('+3 days')) }}" min="2020-01-01" max="2099-12-31" required>
                     </div>
 
                     <div class="p-2 bg-light rounded-2 border small text-muted" style="font-size: 0.75rem;">

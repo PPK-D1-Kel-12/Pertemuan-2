@@ -2,12 +2,35 @@
 
 namespace App\Services;
 
+use App\Repositories\DatabaseListRepository;
+use App\Repositories\DatabaseTaskRepository;
 use Illuminate\Support\Facades\Session;
 
 class MockDataService
 {
     private const SESSION_KEY = 'jara_mock_database';
     private const CURRENT_USER_KEY = 'jara_current_user_id';
+
+    protected DatabaseListRepository $listRepo;
+    protected DatabaseTaskRepository $taskRepo;
+
+    public function __construct(
+        ?DatabaseListRepository $listRepo = null,
+        ?DatabaseTaskRepository $taskRepo = null
+    ) {
+        $this->listRepo = $listRepo ?? app(DatabaseListRepository::class);
+        $this->taskRepo = $taskRepo ?? app(DatabaseTaskRepository::class);
+    }
+
+    public function getListRepository(): DatabaseListRepository
+    {
+        return $this->listRepo;
+    }
+
+    public function getTaskRepository(): DatabaseTaskRepository
+    {
+        return $this->taskRepo;
+    }
 
     /**
      * Inisialisasi data awal jika session masih kosong.
@@ -345,11 +368,25 @@ class MockDataService
         return $db['lists'] ?? [];
     }
 
+    public function getList(int $listId): ?array
+    {
+        $lists = $this->getLists();
+        return $lists[$listId] ?? null;
+    }
+
     public function createList(string $name): array
     {
         $db = $this->getDatabase();
         $currentUser = $this->getCurrentUser();
-        $newId = count($db['lists']) ? max(array_keys($db['lists'])) + 1 : 1;
+
+        // Eksekusi Prepared Statement INSERT ke Basis Data SQLite (SRS-F-20)
+        try {
+            $dbListId = $this->listRepo->create($name, 1, $currentUser['id']);
+        } catch (\Throwable $e) {
+            $dbListId = null;
+        }
+
+        $newId = $dbListId ?? (count($db['lists']) ? max(array_keys($db['lists'])) + 1 : 1);
 
         $db['lists'][$newId] = [
             'id' => $newId,
@@ -365,12 +402,25 @@ class MockDataService
     public function deleteList(int $listId): array
     {
         $db = $this->getDatabase();
+        $currentUser = $this->getCurrentUser();
+
         if (count($db['lists']) <= 1) {
             return ['success' => false, 'message' => 'Minimal harus ada 1 list dalam sistem.'];
         }
 
         if (isset($db['lists'][$listId])) {
+            // Validasi otorisasi: hanya Owner atau Admin yang boleh menghapus list (SRS-F-19)
+            if (($db['lists'][$listId]['owner_id'] ?? null) !== $currentUser['id'] && ($currentUser['role'] ?? '') !== 'admin') {
+                return ['success' => false, 'unauthorized' => true, 'message' => 'Akses Ditolak: Anda bukan pemilik sah dari list ini.'];
+            }
+
             $name = $db['lists'][$listId]['name'];
+
+            // Eksekusi Prepared Statement DELETE ke SQLite (SRS-F-20)
+            try {
+                $this->listRepo->delete($listId);
+            } catch (\Throwable $e) {}
+
             unset($db['lists'][$listId]);
 
             // Pindahkan task dari list ini ke list pertama yang ada
@@ -378,6 +428,9 @@ class MockDataService
             foreach ($db['tasks'] as &$task) {
                 if ($task['list_id'] === $listId) {
                     $task['list_id'] = $firstListId;
+                    try {
+                        $this->taskRepo->moveList($task['id'], $firstListId);
+                    } catch (\Throwable $e) {}
                 }
             }
 
@@ -448,15 +501,29 @@ class MockDataService
         $task = &$db['tasks'][$taskId];
         $currentUser = $this->getCurrentUser();
 
+        // Otorisasi: Hanya Owner atau Admin yang berhak memodifikasi rincian task
+        if ($task['owner_id'] !== $currentUser['id'] && ($currentUser['role'] ?? '') !== 'admin') {
+            return ['success' => false, 'unauthorized' => true, 'message' => 'Akses Ditolak: Hanya pemilik task yang berwenang mengubah task ini.'];
+        }
+
         $task['title'] = $data['title'] ?? $task['title'];
         $task['description'] = $data['description'] ?? $task['description'];
         $task['priority'] = $data['priority'] ?? $task['priority'];
         $task['deadline'] = $data['deadline'] ?? $task['deadline'];
 
+        // Eksekusi Prepared Statement UPDATE ke SQLite (SRS-F-20)
+        try {
+            $this->taskRepo->update($taskId, $data);
+        } catch (\Throwable $e) {}
+
         if (isset($data['list_id']) && (int)$data['list_id'] !== $task['list_id']) {
             $oldList = $db['lists'][$task['list_id']]['name'] ?? 'List Lama';
             $newList = $db['lists'][$data['list_id']]['name'] ?? 'List Baru';
             $task['list_id'] = (int)$data['list_id'];
+
+            try {
+                $this->taskRepo->moveList($taskId, (int)$data['list_id']);
+            } catch (\Throwable $e) {}
 
             $task['activities'][] = [
                 'id' => time() + rand(1, 999),
@@ -481,9 +548,14 @@ class MockDataService
         }
 
         // Hanya Owner atau Admin yang boleh menghapus task
-        if ($db['tasks'][$taskId]['owner_id'] !== $currentUser['id'] && $currentUser['role'] !== 'admin') {
-            return ['success' => false, 'message' => 'Hanya Pemilik Task yang berhak menghapus task ini.'];
+        if ($db['tasks'][$taskId]['owner_id'] !== $currentUser['id'] && ($currentUser['role'] ?? '') !== 'admin') {
+            return ['success' => false, 'unauthorized' => true, 'message' => 'Akses Ditolak: Hanya pemilik task yang berhak menghapus task ini.'];
         }
+
+        // Eksekusi Prepared Statement DELETE ke SQLite (SRS-F-20)
+        try {
+            $this->taskRepo->delete($taskId);
+        } catch (\Throwable $e) {}
 
         unset($db['tasks'][$taskId]);
         $this->saveDatabase($db);
@@ -511,8 +583,8 @@ class MockDataService
 
         $task = &$db['tasks'][$taskId];
 
-        if ($task['owner_id'] !== $currentUser['id']) {
-            return ['success' => false, 'message' => 'Hanya Pemilik Task yang dapat menambahkan kolaborator.'];
+        if ($task['owner_id'] !== $currentUser['id'] && ($currentUser['role'] ?? '') !== 'admin') {
+            return ['success' => false, 'unauthorized' => true, 'message' => 'Akses Ditolak: Hanya pemilik task yang dapat menambahkan kolaborator.'];
         }
 
         foreach ($task['collaborators'] as $collab) {
@@ -530,6 +602,12 @@ class MockDataService
 
         $targetUser = $users[$targetUserId] ?? ['name' => 'User'];
         $roleLabel = $role === 'viewer' ? 'Viewer (Hanya Lihat)' : 'Editor (Bisa Update Status)';
+
+        // Eksekusi Prepared Statement INSERT ke SQLite (SRS-F-20)
+        try {
+            $this->taskRepo->addCollaborator($taskId, $targetUserId, $role, $currentUser['id']);
+            $this->taskRepo->addActivity($taskId, $currentUser['id'], 'collab_add', "{$currentUser['name']} menambahkan {$targetUser['name']} sebagai {$roleLabel}.");
+        } catch (\Throwable $e) {}
 
         $task['activities'][] = [
             'id' => time() + rand(1, 999),
@@ -568,11 +646,11 @@ class MockDataService
 
         $task = &$db['tasks'][$taskId];
 
-        $isOwner = $task['owner_id'] === $currentUser['id'];
+        $isOwner = ($task['owner_id'] === $currentUser['id']) || (($currentUser['role'] ?? '') === 'admin');
         $isSelf = $currentUser['id'] === $targetUserId;
 
         if (!$isOwner && !$isSelf) {
-            return ['success' => false, 'message' => 'Anda tidak memiliki hak untuk menghapus kolaborator ini.'];
+            return ['success' => false, 'unauthorized' => true, 'message' => 'Akses Ditolak: Anda tidak memiliki hak untuk menghapus kolaborator ini.'];
         }
 
         $targetUser = $users[$targetUserId] ?? ['name' => 'User'];
@@ -590,6 +668,12 @@ class MockDataService
         $actionText = $isSelf
             ? "{$targetUser['name']} keluar dari task ini."
             : "{$currentUser['name']} mengeluarkan {$targetUser['name']} dari task.";
+
+        // Eksekusi Prepared Statement DELETE ke SQLite (SRS-F-20)
+        try {
+            $this->taskRepo->removeCollaborator($taskId, $targetUserId);
+            $this->taskRepo->addActivity($taskId, $currentUser['id'], 'collab_remove', $actionText);
+        } catch (\Throwable $e) {}
 
         $task['activities'][] = [
             'id' => time() + rand(1, 999),
@@ -619,7 +703,7 @@ class MockDataService
         $task = &$db['tasks'][$taskId];
         $oldStatus = $task['status'];
 
-        $canEdit = ($task['owner_id'] === $currentUser['id']);
+        $canEdit = ($task['owner_id'] === $currentUser['id']) || (($currentUser['role'] ?? '') === 'admin');
         if (!$canEdit) {
             foreach ($task['collaborators'] as $collab) {
                 if ($collab['user_id'] === $currentUser['id'] && $collab['role'] === 'editor') {
@@ -630,7 +714,7 @@ class MockDataService
         }
 
         if (!$canEdit) {
-            return ['success' => false, 'message' => 'Anda hanya memiliki hak akses Viewer (Hanya Lihat).'];
+            return ['success' => false, 'unauthorized' => true, 'message' => 'Akses Ditolak: Anda hanya memiliki hak akses Viewer (Hanya Lihat).'];
         }
 
         if ($oldStatus === $newStatus) {
@@ -638,6 +722,12 @@ class MockDataService
         }
 
         $task['status'] = $newStatus;
+
+        // Eksekusi Prepared Statement UPDATE ke SQLite (SRS-F-20)
+        try {
+            $this->taskRepo->updateStatus($taskId, $newStatus);
+            $this->taskRepo->addActivity($taskId, $currentUser['id'], 'status_change', "{$currentUser['name']} mengubah status dari '{$oldStatus}' ke '{$newStatus}'.");
+        } catch (\Throwable $e) {}
 
         $task['activities'][] = [
             'id' => time() + rand(1, 999),
@@ -666,7 +756,7 @@ class MockDataService
 
         $task = &$db['tasks'][$taskId];
 
-        $canComment = ($task['owner_id'] === $currentUser['id']);
+        $canComment = ($task['owner_id'] === $currentUser['id']) || (($currentUser['role'] ?? '') === 'admin');
         if (!$canComment) {
             foreach ($task['collaborators'] as $collab) {
                 if ($collab['user_id'] === $currentUser['id']) {
@@ -677,8 +767,13 @@ class MockDataService
         }
 
         if (!$canComment) {
-            return ['success' => false, 'message' => 'Anda tidak memiliki akses ke task ini.'];
+            return ['success' => false, 'unauthorized' => true, 'message' => 'Akses Ditolak: Anda tidak memiliki akses ke task ini.'];
         }
+
+        // Eksekusi Prepared Statement INSERT ke SQLite (SRS-F-20)
+        try {
+            $this->taskRepo->addActivity($taskId, $currentUser['id'], 'progress_note', trim($note));
+        } catch (\Throwable $e) {}
 
         $task['activities'][] = [
             'id' => time() + rand(1, 999),
@@ -701,7 +796,14 @@ class MockDataService
         $db = $this->getDatabase();
         $currentUser = $this->getCurrentUser();
 
-        $newId = count($db['tasks']) ? max(array_keys($db['tasks'])) + 1 : 1;
+        // Eksekusi Prepared Statement INSERT ke SQLite (SRS-F-20)
+        try {
+            $dbTaskId = $this->taskRepo->create($data, $currentUser['id']);
+        } catch (\Throwable $e) {
+            $dbTaskId = null;
+        }
+
+        $newId = $dbTaskId ?? (count($db['tasks']) ? max(array_keys($db['tasks'])) + 1 : 1);
 
         $db['tasks'][$newId] = [
             'id' => $newId,

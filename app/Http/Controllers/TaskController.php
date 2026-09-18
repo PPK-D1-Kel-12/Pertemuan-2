@@ -81,6 +81,10 @@ class TaskController extends Controller
             $request->input('role')
         );
 
+        if (!empty($result['unauthorized'])) {
+            abort(403, $result['message']);
+        }
+
         if ($result['success']) {
             return redirect()->route('tasks.index', ['open_task' => $taskId])->with('success', $result['message']);
         }
@@ -91,6 +95,10 @@ class TaskController extends Controller
     public function removeCollaborator(int $taskId, int $userId)
     {
         $result = $this->mockService->removeCollaborator($taskId, $userId);
+
+        if (!empty($result['unauthorized'])) {
+            abort(403, $result['message']);
+        }
 
         if ($result['success']) {
             return redirect()->route('tasks.index', ['open_task' => $taskId])->with('success', $result['message']);
@@ -107,6 +115,10 @@ class TaskController extends Controller
 
         $result = $this->mockService->updateStatus($taskId, $request->input('status'));
 
+        if (!empty($result['unauthorized'])) {
+            abort(403, $result['message']);
+        }
+
         if ($result['success']) {
             return redirect()->back()->with('success', $result['message']);
         }
@@ -117,10 +129,14 @@ class TaskController extends Controller
     public function addProgressNote(Request $request, int $taskId)
     {
         $request->validate([
-            'note' => 'required|string|max:1000',
+            'note' => 'required|string|min:1|max:1000',
         ]);
 
         $result = $this->mockService->addProgressNote($taskId, $request->input('note'));
+
+        if (!empty($result['unauthorized'])) {
+            abort(403, $result['message']);
+        }
 
         if ($result['success']) {
             return redirect()->route('tasks.index', ['open_task' => $taskId])->with('success', $result['message']);
@@ -132,8 +148,10 @@ class TaskController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => 'required|string|min:1|max:255',
+            'description' => 'nullable|string|max:1000',
             'priority' => 'required|in:Tinggi,Sedang,Rendah',
+            'deadline' => 'nullable|date',
             'list_id' => 'required|integer',
         ]);
 
@@ -146,13 +164,18 @@ class TaskController extends Controller
     public function update(Request $request, int $taskId)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => 'required|string|min:1|max:255',
+            'description' => 'nullable|string|max:1000',
             'priority' => 'required|in:Tinggi,Sedang,Rendah',
             'deadline' => 'required|date',
             'list_id' => 'required|integer',
         ]);
 
         $result = $this->mockService->updateTask($taskId, $request->all());
+
+        if (!empty($result['unauthorized'])) {
+            abort(403, $result['message']);
+        }
 
         return redirect()->route('tasks.index', ['list_id' => $request->input('list_id'), 'open_task' => $taskId])
             ->with('success', $result['message']);
@@ -161,6 +184,10 @@ class TaskController extends Controller
     public function destroy(int $taskId)
     {
         $result = $this->mockService->deleteTask($taskId);
+
+        if (!empty($result['unauthorized'])) {
+            abort(403, $result['message']);
+        }
 
         if ($result['success']) {
             return redirect()->route('tasks.index')->with('success', $result['message']);
@@ -176,6 +203,10 @@ class TaskController extends Controller
         ]);
 
         $result = $this->mockService->moveTask($taskId, (int) $request->input('list_id'));
+
+        if (!empty($result['unauthorized'])) {
+            abort(403, $result['message']);
+        }
 
         return redirect()->route('tasks.index', ['list_id' => $request->input('list_id'), 'open_task' => $taskId])
             ->with('success', $result['message']);

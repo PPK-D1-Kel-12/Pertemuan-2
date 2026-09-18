@@ -1,6 +1,6 @@
 @php
     $isCompleted = ($task['status'] === 'Selesai');
-    $isOwner = ($task['owner_id'] === $currentUser['id']);
+    $isOwner = ($task['owner_id'] === $currentUser['id']) || (($currentUser['role'] ?? '') === 'admin');
     
     $myCollabRole = null;
     foreach ($task['collaborators'] as $c) {
@@ -10,6 +10,7 @@
         }
     }
     
+    $canToggleStatus = $isOwner || ($myCollabRole === 'editor');
     $isOverdue = (strtotime($task['deadline']) < time() && !$isCompleted);
 @endphp
 
@@ -20,16 +21,26 @@
     <div class="d-flex align-items-center gap-3 overflow-hidden flex-grow-1">
         <!-- Quick Status Toggle Checkbox -->
         <div onclick="event.stopPropagation();">
-            <form action="{{ route('tasks.update-status', $task['id']) }}" method="POST" class="d-inline">
-                @csrf
-                <input type="hidden" name="status" value="{{ $isCompleted ? 'To Do' : 'Selesai' }}">
-                <button type="submit" 
+            @if($canToggleStatus)
+                <form action="{{ route('tasks.update-status', $task['id']) }}" method="POST" class="d-inline">
+                    @csrf
+                    <input type="hidden" name="status" value="{{ $isCompleted ? 'To Do' : 'Selesai' }}">
+                    <button type="submit" 
+                            class="btn btn-sm p-0 border-0 text-decoration-none" 
+                            title="{{ $isCompleted ? 'Tandai Belum Selesai' : 'Tandai Selesai' }}"
+                            style="color: {{ $isCompleted ? '#10b981' : '#cbd5e1' }}; font-size: 1.25rem; line-height: 1;">
+                        <i class="bi {{ $isCompleted ? 'bi-check-circle-fill' : 'bi-circle' }}"></i>
+                    </button>
+                </form>
+            @else
+                <button type="button" 
                         class="btn btn-sm p-0 border-0 text-decoration-none" 
-                        title="{{ $isCompleted ? 'Tandai Belum Selesai' : 'Tandai Selesai' }}"
-                        style="color: {{ $isCompleted ? '#10b981' : '#cbd5e1' }}; font-size: 1.25rem; line-height: 1;">
+                        disabled
+                        title="Hanya Pemilik Task atau Editor yang dapat mengubah status (Viewer: Read-Only)"
+                        style="color: {{ $isCompleted ? '#10b981' : '#cbd5e1' }}; font-size: 1.25rem; line-height: 1; cursor: not-allowed; opacity: 0.6;">
                     <i class="bi {{ $isCompleted ? 'bi-check-circle-fill' : 'bi-circle' }}"></i>
                 </button>
-            </form>
+            @endif
         </div>
 
         <!-- Title & Subtitle -->

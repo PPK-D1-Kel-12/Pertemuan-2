@@ -329,7 +329,10 @@
                                     Member
                                 </span>
                             @endif
-                            @if(!empty($list['is_owner']))
+                            @php
+                                $canDeleteList = (!empty($list['is_owner'])) || (($currentUser['role'] ?? '') === 'admin');
+                            @endphp
+                            @if($canDeleteList)
                                 <button type="button" class="btn btn-link btn-sm text-danger p-1 text-decoration-none opacity-50 hover-opacity-100" 
                                         onclick="openDeleteListModal({{ $list['id'] }}, '{{ addslashes($list['name']) }}')" 
                                         title="Hapus List Beserta Seluruh Isinya (SRS-F-18)">

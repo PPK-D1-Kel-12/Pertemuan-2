@@ -38,7 +38,7 @@ class ListController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:100',
+            'name' => 'required|string|min:1|max:100',
         ]);
 
         $currentUserId = session('jara_current_user_id', 1);
@@ -64,6 +64,12 @@ class ListController extends Controller
         $list = DB::table('lists')->where('id', $id)->first();
         if (!$list) {
             return redirect()->route('tasks.index')->with('error', 'List tidak ditemukan.');
+        }
+
+        // 1b. Otorisasi kepemilikan: hanya pemilik atau admin yang boleh menghapus (SRS-F-19)
+        $currentUser = DB::table('users')->where('id', $currentUserId)->first();
+        if ($currentUser && $list->owner_id != $currentUser->id && ($currentUser->role ?? '') !== 'admin') {
+            abort(403, 'Akses Ditolak: Anda bukan pemilik sah dari list ini.');
         }
 
         // 2. Eksekusi transaksi atomik (SRS-F-18)
@@ -112,4 +118,3 @@ class ListController extends Controller
         }
     }
 }
-
